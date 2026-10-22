@@ -12,7 +12,6 @@
         "APP_ENV": "production",
         "APP_DEBUG": "false",
         "LOG_CHANNEL": "stderr",
-        "APP_CONFIG_CACHE": "/tmp/bengkel-gading-jaya-config.php",
         "SESSION_DRIVER": "cookie",
         "CACHE_STORE": "array",
         "VIEW_COMPILED_PATH": "/tmp/laravel-views"
