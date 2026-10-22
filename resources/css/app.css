@@ -1,0 +1,14 @@
+@import 'tailwindcss';
+
+:root {
+    --color-rubick-blue: #1b42b6;
+    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+.bg-rubick {
+    background-color: #1b42b6 !important;
+}
+
+.text-rubick {
+    color: #1b42b6 !important;
+}

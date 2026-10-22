@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Bengkel GMJ</string>
+    <!-- Change this URL to your deployed server URL or local development server IP -->
+    <!-- For Android Emulator local testing: http://[IP_ADDRESS] -->
+    <!-- For local Wi-Fi testing: http://[IP_ADDRESS] -->
+    <!-- For production URL: https://bengkel-gmj.com -->
+    <string name="web_url">http://bengkel-gmj.com</string>
+
+    <string name="error_offline_title">Tidak Ada Koneksi Internet</string>
+    <string name="error_offline_message">Harap periksa koneksi internet Anda dan coba lagi.</string>
+    <string name="btn_retry">Coba Lagi</string>
+</resources>
