@@ -65,13 +65,20 @@ class AuthController extends Controller
 
     public function redirectToGoogle()
     {
-        return Socialite::driver('google')->redirect();
+        $redirectUrl = config('services.google.redirect') ?: url('/auth/google/callback');
+
+        return Socialite::driver('google')
+            ->redirectUrl($redirectUrl)
+            ->redirect();
     }
 
     public function handleGoogleCallback(Request $request)
     {
         try {
-            $googleUser = Socialite::driver('google')->user();
+            $redirectUrl = config('services.google.redirect') ?: url('/auth/google/callback');
+            $googleUser = Socialite::driver('google')
+                ->redirectUrl($redirectUrl)
+                ->user();
         } catch (\Throwable $exception) {
             return redirect()->route('login')->withErrors([
                 'email' => 'Login dengan Google gagal. Silakan coba lagi.',
