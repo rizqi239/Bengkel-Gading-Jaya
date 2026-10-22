@@ -11,8 +11,8 @@
         "APP_ENV": "production",
         "APP_DEBUG": "false",
         "LOG_CHANNEL": "stderr",
-        "SESSION_DRIVER": "database",
-        "CACHE_STORE": "database",
+        "SESSION_DRIVER": "cookie",
+        "CACHE_STORE": "array",
         "VIEW_COMPILED_PATH": "/tmp/laravel-views"
     },
     "routes": [
