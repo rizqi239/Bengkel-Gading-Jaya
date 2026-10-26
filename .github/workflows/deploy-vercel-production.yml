@@ -40,7 +40,7 @@ jobs:
 
       - name: Verify Vercel token is configured
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN || secrets.GADING_JAYA }}
         run: |
           if [ -z "$VERCEL_TOKEN" ]; then
             echo "Add VERCEL_TOKEN as a GitHub Actions repository secret before deploying."
@@ -66,5 +66,5 @@ jobs:
 
       - name: Build, patch PHP runtime, and deploy
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN || secrets.GADING_JAYA }}
         run: npm run deploy:production

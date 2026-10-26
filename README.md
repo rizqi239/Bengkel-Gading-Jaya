@@ -49,17 +49,17 @@ Database Neon untuk project ini sudah berisi skema aplikasi dan salinan data MyS
 
 Upload dan tampilan foto stok menggunakan disk `public`, yang tetap lokal secara default untuk development. Di Vercel, atur disk tersebut ke `s3` dan berikan kredensial bucket yang memiliki akses baca publik agar upload tidak bergantung pada filesystem function yang tidak persisten. Foto yang sudah tersimpan secara lokal tidak otomatis dipindahkan ke bucket.
 
-### Workaround runtime PHP untuk preview
+### Deploy produksi tanpa WSL di laptop
 
-Jika log function menunjukkan `ERR_MODULE_NOT_FOUND` untuk `launcher.launcher`, runtime PHP Vercel yang terpasang masih menggunakan metadata handler lama. Buat prebuilt output pada lingkungan Linux yang sudah terautentikasi ke project Vercel yang benar (misalnya WSL/Docker yang berfungsi), lalu patch metadata sebelum upload:
+Jika function PHP di Vercel gagal dijalankan, workflow GitHub Actions dapat membangun dan men-deploy output dengan patch runtime PHP yang diperlukan. Runner Ubuntu berjalan di GitHub, bukan di laptop; Docker dan WSL lokal tidak diperlukan.
 
-```sh
-vercel project inspect --non-interactive
-vercel pull --yes --environment preview
-vercel build --yes --environment preview
-node scripts/patch-vercel-runtime.mjs
-vercel deploy --prebuilt --yes
-```
+1. Buat Vercel access token, lalu simpan sebagai repository secret `VERCEL_TOKEN` di **Settings → Secrets and variables → Actions** pada GitHub. Workflow juga menerima nama `GADING_JAYA` jika itu nama secret yang sudah disiapkan.
+2. Buka tab **Actions**, pilih **Deploy Vercel production**, lalu klik **Run workflow**.
+3. Pilih `deploy` pada konfirmasi produksi dan jalankan workflow dari branch yang ingin di-deploy.
+
+Workflow memverifikasi project Vercel yang terhubung, mengambil environment produksi, membangun output, memperbaiki metadata runtime PHP, lalu men-deploy hasil prebuilt ke produksi. Proses berhenti jika langkah mana pun gagal atau project yang terhubung bukan project aplikasi ini. Workflow hanya berjalan saat dipicu manual dan meminta konfirmasi sebelum deploy.
+
+Untuk menjalankan deploy dari komputer lokal, diperlukan Linux; build runtime PHP tidak andal di Windows.
 
 Patcher menerapkan metadata `NodejsLambda` dari workaround upstream: file handler `launcher.js` dan AWS handler `launcher.launcher`, tanpa helper/source-map injection. Patcher juga menyesuaikan fallback `LAMBDA_TASK_ROOT` ke `/var/task` dan normalisasi body/header request. Patcher hanya menyentuh fungsi PHP yang cocok di `.vercel/output`; jika output tidak memiliki bentuk yang diharapkan, proses berhenti dengan error. Build harus dilakukan di Linux karena builder PHP gagal menghasilkan executable runtime yang valid di Windows.
 
