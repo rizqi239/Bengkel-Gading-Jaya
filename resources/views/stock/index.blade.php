@@ -83,7 +83,7 @@
 
                 <a href="{{ route('stock.create') }}" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-indigo-500 shadow-sm">
                     <i data-lucide="plus" class="h-4 w-4"></i>
-                    <span>Tambah Barang</span>
+                    <span>Tambah Produk</span>
                 </a>
             </div>
         </div>

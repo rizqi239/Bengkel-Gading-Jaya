@@ -213,7 +213,7 @@
             <div class="flex flex-wrap items-center gap-3">
                 <a href="{{ route('stock.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-rubick-blue px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-800 transition-colors" style="background-color: #1b42b6;">
                     <i data-lucide="plus-circle" class="h-5 w-5 shrink-0"></i>
-                    <span>Tambah Stok</span>
+                    <span>Tambah Produk</span>
                 </a>
                 <a href="{{ route('dashboard.export') }}" download="Laporan_Operasional_Bengkel_GMJ_{{ date('Y-m-d') }}.csv" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors cursor-pointer">
                     <i data-lucide="file-spreadsheet" class="h-3.5 w-3.5 text-rubick-blue"></i>

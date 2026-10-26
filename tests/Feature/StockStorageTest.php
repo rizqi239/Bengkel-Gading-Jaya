@@ -35,6 +35,61 @@ afterEach(function () {
     Schema::dropIfExists('users');
 });
 
+test('it creates a product and shows it in the stock list', function () {
+    $this->withoutVite();
+
+    $user = User::create([
+        'name' => 'Admin Test',
+        'email' => 'admin@test.com',
+        'password' => bcrypt('password'),
+        'role' => 'Pemilik Toko',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('stock.create'))
+        ->assertOk()
+        ->assertSee('Form Tambah Produk');
+
+    $this->actingAs($user)
+        ->post(route('stock.store'), [
+            'name' => 'Oli Mesin',
+            'category' => 'Oli',
+            'quantity' => 5,
+            'price' => 85000,
+        ])
+        ->assertRedirect(route('stock.index'));
+
+    $stock = Stock::firstOrFail();
+    expect($stock->code)->toBe('SP-001');
+    expect($stock->name)->toBe('Oli Mesin');
+    expect($stock->category)->toBe('Oli');
+    expect($stock->quantity)->toBe(5);
+
+    $this->actingAs($user)
+        ->get(route('stock.index'))
+        ->assertOk()
+        ->assertSee('Oli Mesin');
+});
+
+test('it shows validation errors when product name is missing', function () {
+    $user = User::create([
+        'name' => 'Admin Test',
+        'email' => 'admin@test.com',
+        'password' => bcrypt('password'),
+        'role' => 'Pemilik Toko',
+    ]);
+
+    $this->actingAs($user)
+        ->from(route('stock.create'))
+        ->post(route('stock.store'), [
+            'category' => 'Oli',
+        ])
+        ->assertRedirect(route('stock.create'))
+        ->assertSessionHasErrors('name');
+
+    expect(Stock::count())->toBe(0);
+});
+
 test('it uploads stock photo to configured storage disk', function () {
     $disk = config('filesystems.default');
     Storage::fake($disk);
