@@ -4,7 +4,8 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "deploy:production": "node scripts/deploy-vercel-production.mjs"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",
