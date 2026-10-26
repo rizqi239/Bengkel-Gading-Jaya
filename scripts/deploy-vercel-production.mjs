@@ -7,7 +7,9 @@ const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 const expectedProject = {
     projectId: 'prj_uGtI05jocA3IsqbDjvKeuslpD4Hj',
     projectName: 'bengkel-gading-jaya-q4rj',
+    orgId: 'team_GfJYKPTrNp7DJjpjGArfencc',
 };
+const vercelScope = 'rizqi239s-kedai-pinky';
 
 function run(command, args) {
     console.log(`\n> ${command} ${args.join(' ')}`);
@@ -39,18 +41,23 @@ async function main() {
         throw new Error(`Could not read the linked Vercel project at the repository root: ${error.message}`);
     }
 
-    if (project.projectId !== expectedProject.projectId || project.projectName !== expectedProject.projectName) {
+    if (
+        project.projectId !== expectedProject.projectId ||
+        project.projectName !== expectedProject.projectName ||
+        project.orgId !== expectedProject.orgId
+    ) {
         throw new Error(
-            `The linked Vercel project must be ${expectedProject.projectName} (${expectedProject.projectId}); ` +
-            `found ${project.projectName ?? 'unknown'} (${project.projectId ?? 'unknown'}).`,
+            `The linked Vercel project must be ${expectedProject.projectName} (${expectedProject.projectId}) ` +
+            `in team ${expectedProject.orgId}; found ${project.projectName ?? 'unknown'} ` +
+            `(${project.projectId ?? 'unknown'}) in ${project.orgId ?? 'an unknown team'}.`,
         );
     }
 
-    run('vercel', ['project', 'inspect', '--non-interactive']);
-    run('vercel', ['pull', '--yes', '--environment', 'production']);
-    run('vercel', ['build', '--yes', '--prod']);
+    run('vercel', ['project', 'inspect', '--non-interactive', '--scope', vercelScope]);
+    run('vercel', ['pull', '--yes', '--environment', 'production', '--scope', vercelScope]);
+    run('vercel', ['build', '--yes', '--prod', '--scope', vercelScope]);
     run('node', ['scripts/patch-vercel-runtime.mjs']);
-    run('vercel', ['deploy', '--prebuilt', '--prod', '--yes']);
+    run('vercel', ['deploy', '--prebuilt', '--prod', '--yes', '--scope', vercelScope]);
 }
 
 main().catch((error) => {
