@@ -33,16 +33,35 @@ You can also watch bite-sized lessons with real-world projects on [Laravel Learn
 
 Repository ini sudah memiliki konfigurasi Vercel menggunakan runtime PHP `vercel-php`. Hubungkan repository ini ke Vercel dengan root directory di root repository; proses build menjalankan `npm run build`.
 
-Tambahkan environment variables berikut di **Project Settings → Environment Variables** Vercel. Jangan unggah atau commit file `.env`.
+Database Neon Postgres terhubung melalui Vercel Marketplace dan menyediakan `DATABASE_URL` untuk environment yang terhubung. Aplikasi di Vercel menggunakan PostgreSQL (`DB_CONNECTION=pgsql`); jangan mengganti `DATABASE_URL` dengan kredensial MySQL lokal. Jangan unggah atau commit file `.env`.
 
 - `APP_KEY`: hasilkan dengan `php artisan key:generate --show`, lalu simpan hanya di Vercel.
 - `APP_URL`: URL deployment, misalnya `https://nama-proyek.vercel.app`.
-- `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`: kredensial database MySQL yang dapat diakses dari Vercel. Vercel tidak menyediakan database MySQL untuk aplikasi ini.
+- `DATABASE_URL`: dibuat dan dikelola oleh integrasi Neon di Vercel.
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` jika login Google digunakan. Tambahkan URL callback Vercel ke konfigurasi OAuth Google.
+- Untuk foto stok, siapkan bucket S3 atau layanan yang kompatibel, lalu tambahkan variabel berikut di pengaturan Environment Variables Vercel:
+  - `FILESYSTEM_DISK=s3`
+  - `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`, dan `AWS_BUCKET`
+  - `AWS_URL` sebagai URL publik bucket/CDN jika penyedia membutuhkannya.
+  - `AWS_ENDPOINT` dan `AWS_USE_PATH_STYLE_ENDPOINT` jika penyedia S3-compatible memerlukannya (misalnya Cloudflare R2).
 
-Jalankan migrasi pada database production sebelum aplikasi menerima trafik, misalnya dari lingkungan lokal yang memiliki akses aman ke database: `php artisan migrate --force`. Session dan cache dikonfigurasi menggunakan database supaya dapat dipakai lintas serverless function.
+Database Neon untuk project ini sudah berisi skema aplikasi dan salinan data MySQL lokal. Saat membuat resource Neon baru, jalankan migrasi Laravel dan pindahkan data MySQL sebelum aplikasi menerima trafik.
 
-**Penyimpanan foto stok belum siap untuk production di Vercel.** Aplikasi saat ini menulis foto ke filesystem lokal, sedangkan filesystem function Vercel tidak persisten. Siapkan object storage eksternal dan arahkan alur upload ke sana sebelum mengandalkan foto yang diunggah setelah deployment.
+Upload dan tampilan foto stok menggunakan disk `public`, yang tetap lokal secara default untuk development. Di Vercel, atur disk tersebut ke `s3` dan berikan kredensial bucket yang memiliki akses baca publik agar upload tidak bergantung pada filesystem function yang tidak persisten. Foto yang sudah tersimpan secara lokal tidak otomatis dipindahkan ke bucket.
+
+### Workaround runtime PHP untuk preview
+
+Jika log function menunjukkan `ERR_MODULE_NOT_FOUND` untuk `launcher.launcher`, runtime PHP Vercel yang terpasang masih menggunakan metadata handler lama. Buat prebuilt output pada lingkungan Linux yang sudah terautentikasi ke project Vercel yang benar (misalnya WSL/Docker yang berfungsi), lalu patch metadata sebelum upload:
+
+```sh
+vercel project inspect --non-interactive
+vercel pull --yes --environment preview
+vercel build --yes --environment preview
+node scripts/patch-vercel-runtime.mjs
+vercel deploy --prebuilt --yes
+```
+
+Patcher menerapkan metadata `NodejsLambda` dari workaround upstream: file handler `launcher.js` dan AWS handler `launcher.launcher`, tanpa helper/source-map injection. Patcher juga menyesuaikan fallback `LAMBDA_TASK_ROOT` ke `/var/task` dan normalisasi body/header request. Patcher hanya menyentuh fungsi PHP yang cocok di `.vercel/output`; jika output tidak memiliki bentuk yang diharapkan, proses berhenti dengan error. Build harus dilakukan di Linux karena builder PHP gagal menghasilkan executable runtime yang valid di Windows.
 
 ## Agentic Development
 

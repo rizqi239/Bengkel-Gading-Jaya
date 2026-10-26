@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Stock extends Model
 {
@@ -24,4 +25,26 @@ class Stock extends Model
         'quantity' => 'integer',
         'price' => 'decimal:2',
     ];
+
+    /**
+     * Get the public URL for the photo.
+     */
+    public function getPhotoUrlAttribute(): ?string
+    {
+        if (! $this->photo) {
+            return null;
+        }
+
+        if (str_starts_with($this->photo, 'http://') || str_starts_with($this->photo, 'https://') || str_starts_with($this->photo, 'data:')) {
+            return $this->photo;
+        }
+
+        $disk = config('filesystems.default');
+
+        try {
+            return Storage::disk($disk)->url($this->photo);
+        } catch (\Throwable $e) {
+            return asset('storage/' . $this->photo);
+        }
+    }
 }

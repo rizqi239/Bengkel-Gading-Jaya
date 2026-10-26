@@ -63,7 +63,7 @@
                     <input id="photoInput" name="photo" type="file" accept="image/*" class="rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none">
                     <div id="photoPreview" class="h-16 w-16 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-xs text-slate-400">
                         @if($stock->photo)
-                            <img src="{{ asset('storage/' . $stock->photo) }}" alt="{{ $stock->name }}" class="h-16 w-16 object-cover rounded-lg">
+                            <img src="{{ $stock->photo_url }}" alt="{{ $stock->name }}" class="h-16 w-16 object-cover rounded-lg">
                         @else
                             Preview
                         @endif

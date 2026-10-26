@@ -40,8 +40,7 @@ class StockController extends Controller
         ]);
 
         if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('stocks', 'public');
-            $data['photo'] = $path;
+            $data['photo'] = $this->processPhoto($request->file('photo'));
         }
 
         $data['quantity'] = $data['quantity'] ?? 0;
@@ -93,11 +92,15 @@ class StockController extends Controller
         ]);
 
         if ($request->hasFile('photo')) {
-            // delete old photo if exists
-            if ($stock->photo) {
-                Storage::disk('public')->delete($stock->photo);
+            // Delete old photo if it was stored locally
+            if ($stock->photo && ! str_starts_with($stock->photo, 'data:')) {
+                try {
+                    Storage::disk('public')->delete($stock->photo);
+                } catch (\Throwable $e) {
+                    // Ignore deletion failure
+                }
             }
-            $data['photo'] = $request->file('photo')->store('stocks', 'public');
+            $data['photo'] = $this->processPhoto($request->file('photo'));
         }
 
         $stock->update($data);
@@ -128,10 +131,59 @@ class StockController extends Controller
             return redirect()->route('stock.index')->with('error', 'Akses ditolak: Akun dengan role Mekanik dan Kasir tidak diizinkan untuk menghapus stok barang.');
         }
 
-        if ($stock->photo) {
-            Storage::disk('public')->delete($stock->photo);
+        if ($stock->photo && ! str_starts_with($stock->photo, 'data:')) {
+            try {
+                Storage::disk('public')->delete($stock->photo);
+            } catch (\Throwable $e) {
+                // Ignore deletion failure
+            }
         }
         $stock->delete();
         return redirect()->route('stock.index')->with('success', 'Barang dihapus.');
+    }
+
+    /**
+     * Process uploaded photo into an optimized Base64 data URI.
+     * Works 100% on serverless (Vercel) without writing to read-only disk.
+     */
+    private function processPhoto($file): string
+    {
+        if (extension_loaded('gd') && function_exists('imagecreatefromstring')) {
+            try {
+                $imageContent = file_get_contents($file->getRealPath());
+                $src = @imagecreatefromstring($imageContent);
+                if ($src) {
+                    $width = imagesx($src);
+                    $height = imagesy($src);
+                    $maxDim = 800;
+
+                    if ($width > $maxDim || $height > $maxDim) {
+                        $ratio = min($maxDim / $width, $maxDim / $height);
+                        $newWidth = (int) ($width * $ratio);
+                        $newHeight = (int) ($height * $ratio);
+
+                        $dst = imagecreatetruecolor($newWidth, $newHeight);
+                        imagealphablending($dst, false);
+                        imagesavealpha($dst, true);
+                        imagecopyresampled($dst, $src, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+                        imagedestroy($src);
+                        $src = $dst;
+                    }
+
+                    ob_start();
+                    imagejpeg($src, null, 80);
+                    $compressed = ob_get_clean();
+                    imagedestroy($src);
+
+                    if ($compressed) {
+                        return 'data:image/jpeg;base64,' . base64_encode($compressed);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Fallback to direct raw base64
+            }
+        }
+
+        return 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
     }
 }

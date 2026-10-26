@@ -94,7 +94,7 @@
                     <div class="flex items-center gap-4">
                         <div class="h-20 w-20 shrink-0 overflow-hidden rounded-3xl bg-slate-100 border border-slate-200">
                             @if($stock->photo)
-                                <img src="{{ asset('storage/' . $stock->photo) }}" alt="{{ $stock->name }}" class="h-full w-full object-cover">
+                                <img src="{{ $stock->photo_url }}" alt="{{ $stock->name }}" class="h-full w-full object-cover">
                             @else
                                 <div class="flex h-full items-center justify-center text-xs text-slate-400">No Foto</div>
                             @endif
@@ -164,7 +164,7 @@
                                 <td class="py-4 px-6 font-semibold text-slate-800">{{ preg_replace('/^SP_(\d+)$/i', 'SP-$1', $stock->code) }}</td>
                                 <td class="py-4 px-6">
                                     @if($stock->photo)
-                                        <img src="{{ asset('storage/' . $stock->photo) }}" alt="{{ $stock->name }}" class="h-16 w-16 rounded-lg object-cover border border-slate-100">
+                                        <img src="{{ $stock->photo_url }}" alt="{{ $stock->name }}" class="h-16 w-16 rounded-lg object-cover border border-slate-100">
                                     @else
                                         <div class="h-16 w-16 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-sm text-slate-400">No Foto</div>
                                     @endif

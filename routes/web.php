@@ -31,8 +31,6 @@ Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/auth/google/redirect', [AuthController::class, 'redirectToGoogle'])->name('google.redirect');
 Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('google.callback');
-Route::get('/auth/google/role', [AuthController::class, 'showGoogleRoleForm'])->name('google.role');
-Route::post('/auth/google/role', [AuthController::class, 'completeGoogleRegistration'])->name('google.role.store');
 Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
 Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('password.request');

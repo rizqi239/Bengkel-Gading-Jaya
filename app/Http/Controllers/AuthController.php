@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
@@ -39,21 +38,6 @@ class AuthController extends Controller
         // Coba autentikasi standar via Database
         if (Auth::attempt(['email' => $credentials['email'], 'password' => $credentials['password']], $request->boolean('remember'))) {
             $request->session()->regenerate();
-            return redirect()->intended(route('dashboard'));
-        }
-
-        // Flexible fallback login untuk demo / admin Bengkel GMJ
-        if (in_array(strtolower($credentials['email']), ['admin', 'admin@bengkelgmj.com', 'test@example.com'])) {
-            $user = User::firstOrCreate(
-                ['email' => 'admin@bengkelgmj.com'],
-                [
-                    'name' => 'Admin GMJ',
-                    'password' => Hash::make($credentials['password'] ?: 'password'),
-                ]
-            );
-
-            Auth::login($user, $request->boolean('remember'));
-            $request->session()->regenerate();
 
             return redirect()->intended(route('dashboard'));
         }
@@ -85,7 +69,7 @@ class AuthController extends Controller
             ]);
         }
 
-        if (!$googleUser->getEmail()) {
+        if (! $googleUser->getEmail()) {
             return redirect()->route('login')->withErrors([
                 'email' => 'Akun Google tidak memberikan alamat email yang valid.',
             ]);
@@ -100,55 +84,13 @@ class AuthController extends Controller
             return redirect()->intended(route('dashboard'));
         }
 
-        $request->session()->put('google_registration', [
-            'name' => $googleUser->getName() ?: $googleUser->getNickname() ?: 'Pengguna Google',
-            'email' => $googleUser->getEmail(),
-        ]);
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
-        return redirect()->route('google.role');
-    }
-
-    public function showGoogleRoleForm(Request $request)
-    {
-        $googleRegistration = $request->session()->get('google_registration');
-
-        if (!is_array($googleRegistration) || empty($googleRegistration['email'])) {
-            return redirect()->route('register')->withErrors([
-                'email' => 'Silakan lanjutkan pendaftaran melalui Google terlebih dahulu.',
-            ]);
-        }
-
-        return view('auth.google-role', compact('googleRegistration'));
-    }
-
-    public function completeGoogleRegistration(Request $request)
-    {
-        $validated = $request->validate([
-            'role' => ['required', 'string', 'in:Mekanik,Pemilik Toko,Kasir'],
-        ]);
-
-        $googleRegistration = $request->session()->get('google_registration');
-
-        if (!is_array($googleRegistration) || empty($googleRegistration['email'])) {
-            return redirect()->route('register')->withErrors([
-                'email' => 'Sesi pendaftaran Google berakhir. Silakan coba lagi.',
-            ]);
-        }
-
-        $user = User::firstOrCreate(
-            ['email' => $googleRegistration['email']],
-            [
-                'name' => $googleRegistration['name'],
-                'password' => Hash::make(Str::random(40)),
-                'role' => $validated['role'],
-            ]
-        );
-
-        $request->session()->forget('google_registration');
-        Auth::login($user, true);
-        $request->session()->regenerate();
-
-        return redirect()->intended(route('dashboard'));
+        return redirect()->route('login')->withErrors([
+            'email' => 'Akun Google ini belum terdaftar. Silakan daftar terlebih dahulu.',
+        ])->with('google_account_unregistered', true);
     }
 
     /**
@@ -228,7 +170,7 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user) {
+        if (! $user) {
             return back()->withErrors([
                 'email' => 'Akun dengan alamat email ini tidak ditemukan.',
             ])->onlyInput('email');

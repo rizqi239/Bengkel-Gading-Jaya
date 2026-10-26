@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
@@ -11,6 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         Schema::table('kasir_transactions', function (Blueprint $table) {
             $table->enum('payment_method', ['Tunai', 'Dana', 'GoPay', 'Bank BCA', 'Bank Mandiri'])->default('Tunai')->change();
         });
@@ -21,6 +26,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         Schema::table('kasir_transactions', function (Blueprint $table) {
             $table->enum('payment_method', ['Tunai', 'Transfer', 'QRIS'])->default('Tunai')->change();
         });
