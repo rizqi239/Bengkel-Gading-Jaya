@@ -53,12 +53,29 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@65.2.0
 
+      - name: Authenticate with Vercel
+        id: vercel-auth
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          GADING_JAYA_TOKEN: ${{ secrets.GADING_JAYA }}
+        run: |
+          if [ -n "$VERCEL_TOKEN" ] && vercel whoami --format json >/dev/null 2>&1; then
+            echo "token_secret=VERCEL_TOKEN" >> "$GITHUB_OUTPUT"
+            echo "Vercel authentication succeeded using VERCEL_TOKEN."
+          elif [ -n "$GADING_JAYA_TOKEN" ] && VERCEL_TOKEN="$GADING_JAYA_TOKEN" vercel whoami --format json >/dev/null 2>&1; then
+            echo "token_secret=GADING_JAYA" >> "$GITHUB_OUTPUT"
+            echo "Vercel authentication succeeded using GADING_JAYA."
+          else
+            echo "Vercel authentication failed. Update VERCEL_TOKEN or GADING_JAYA with a valid token for the account that owns this project."
+            exit 1
+          fi
+
       - name: Link the production Vercel project
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN || secrets.GADING_JAYA }}
+          VERCEL_TOKEN: ${{ steps.vercel-auth.outputs.token_secret == 'VERCEL_TOKEN' && secrets.VERCEL_TOKEN || secrets.GADING_JAYA }}
         run: vercel link --yes --team team_GfJYKPTrNp7DJjpjGArfencc --project prj_uGtI05jocA3IsqbDjvKeuslpD4Hj
 
       - name: Build, patch PHP runtime, and deploy
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN || secrets.GADING_JAYA }}
+          VERCEL_TOKEN: ${{ steps.vercel-auth.outputs.token_secret == 'VERCEL_TOKEN' && secrets.VERCEL_TOKEN || secrets.GADING_JAYA }}
         run: npm run deploy:production
