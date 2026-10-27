@@ -10,8 +10,7 @@
     "outputDirectory": "public",
     "env": {
         "APP_ENV": "production",
-        "APP_DEBUG": "true",
-        "APP_KEY": "base64:9OjdDqct6Rp+T75o7fQS/mi1Mx1izYvJeeg6LJ5ccR8=",
+        "APP_DEBUG": "false",
         "FILESYSTEM_DISK": "s3",
         "LOG_CHANNEL": "stderr",
         "SESSION_DRIVER": "cookie",
