@@ -31,9 +31,11 @@ You can also watch bite-sized lessons with real-world projects on [Laravel Learn
 
 ## Deploy ke Vercel
 
-Repository ini sudah memiliki konfigurasi Vercel menggunakan runtime PHP `vercel-php`. Hubungkan repository ini ke Vercel dengan root directory di root repository; proses build menjalankan `npm run build`.
+Repository ini sudah memiliki konfigurasi Vercel menggunakan runtime PHP `vercel-php`. Runtime `vercel-php@0.9.0` membutuhkan Node.js 22.x, yang dipatok melalui `engines.node` di `package.json`. Hubungkan repository ini ke Vercel dengan root directory di root repository; proses build menjalankan `npm run build`.
 
 Database Neon Postgres terhubung melalui Vercel Marketplace dan menyediakan `DATABASE_URL` untuk environment yang terhubung. Aplikasi di Vercel menggunakan PostgreSQL (`DB_CONNECTION=pgsql`); jangan mengganti `DATABASE_URL` dengan kredensial MySQL lokal. Jangan unggah atau commit file `.env`.
+
+Koneksi PostgreSQL ke Neon menambahkan label pertama hostname secara otomatis sebagai opsi `endpoint` koneksi, termasuk akhiran `-pooler` pada hostname pooler agar cocok dengan SNI Neon. Ini diperlukan oleh runtime PHP serverless yang tidak meneruskan SNI secara otomatis.
 
 - `APP_KEY`: hasilkan dengan `php artisan key:generate --show`, lalu simpan hanya di Vercel.
 - `APP_URL`: URL deployment, misalnya `https://nama-proyek.vercel.app`.
@@ -57,11 +59,13 @@ Jika function PHP di Vercel gagal dijalankan, workflow GitHub Actions dapat memb
 2. Buka tab **Actions**, pilih **Deploy Vercel production**, lalu klik **Run workflow**.
 3. Pilih `deploy` pada konfirmasi produksi dan jalankan workflow dari branch yang ingin di-deploy.
 
-Workflow memverifikasi project Vercel yang terhubung, mengambil environment produksi, membangun output, memperbaiki metadata runtime PHP, lalu men-deploy hasil prebuilt ke produksi. Proses berhenti jika langkah mana pun gagal atau project yang terhubung bukan project aplikasi ini. Workflow hanya berjalan saat dipicu manual dan meminta konfirmasi sebelum deploy.
+Workflow memverifikasi project Vercel yang terhubung, memakai Node.js 22 sesuai runtime PHP yang didukung, mengambil environment produksi, membangun output, memperbaiki metadata runtime PHP, lalu men-deploy hasil prebuilt ke produksi. Proses berhenti jika langkah mana pun gagal atau project yang terhubung bukan project aplikasi ini. Workflow hanya berjalan saat dipicu manual dan meminta konfirmasi sebelum deploy.
 
 Untuk menjalankan deploy dari komputer lokal, diperlukan Linux; build runtime PHP tidak andal di Windows.
 
-Patcher menerapkan metadata `NodejsLambda` dari workaround upstream: file handler `launcher.js` dan AWS handler `launcher.launcher`, tanpa helper/source-map injection. Patcher juga menyesuaikan fallback `LAMBDA_TASK_ROOT` ke `/var/task` dan normalisasi body/header request. Patcher hanya menyentuh fungsi PHP yang cocok di `.vercel/output`; jika output tidak memiliki bentuk yang diharapkan, proses berhenti dengan error. Build harus dilakukan di Linux karena builder PHP gagal menghasilkan executable runtime yang valid di Windows.
+Patcher menerapkan metadata `NodejsLambda` dari workaround upstream: file handler `launcher.js` dan AWS handler `launcher.launcher`, tanpa helper/source-map injection. Patcher juga menyesuaikan fallback `LAMBDA_TASK_ROOT` ke `/var/task`, normalisasi body/header request, dan menghapus referensi `.git` serta `.env*` dari metadata fungsi agar deployment prebuilt tidak mengunggah berkas version-control atau konfigurasi rahasia. Script deploy mengganti symlink `public/storage` dengan salinan target di lingkungan build sementara, lalu menyalin target `storage/app/public` ke output statis jika build menghasilkan symlink `storage` yang tidak dapat diunggah Vercel. Patcher hanya menyentuh fungsi PHP yang cocok di `.vercel/output`; jika output tidak memiliki bentuk yang diharapkan, proses berhenti dengan error. Build harus dilakukan di Linux karena builder PHP gagal menghasilkan executable runtime yang valid di Windows.
+
+Jangan abaikan `vendor` atau direktori framework `storage` di `.vercelignore`: build PHP prebuilt merujuk berkas-berkas tersebut melalui `filePathMap` dan deployment akan gagal jika berkas yang dirujuk tidak diunggah.
 
 ## Agentic Development
 

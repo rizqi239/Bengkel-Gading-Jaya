@@ -53,14 +53,16 @@ const patchedNormalizer = [
     "    const isInvoke = event.Action === 'Invoke';",
     '    let request = event;',
     '    if (isInvoke) {',
-    "        if (typeof event.body !== 'string')",
-    "            throw new TypeError('Invoke body must be JSON text');",
-    '        const parsed = JSON.parse(event.body);',
-    '        if (!isRecord(parsed))',
-    "            throw new TypeError('Invoke body must contain a request object');",
-    '        request = parsed;',
+    "        if (typeof event.body === 'string' && event.body !== '') {",
+    '            const parsed = JSON.parse(event.body);',
+    '            if (!isRecord(parsed))',
+    "                throw new TypeError('Invoke body must contain a request object');",
+    '            request = parsed;',
+    "        } else if (typeof event.method !== 'string' && typeof event.httpMethod !== 'string') {",
+    "            throw new TypeError('Invoke event must contain a request body or method');",
+    '        }',
     '    }',
-    '    const method = isInvoke ? request.method : request.httpMethod;',
+    '    const method = isInvoke ? request.method || request.httpMethod : request.httpMethod;',
     '    const { path } = request;',
     "    if (typeof method !== 'string' || typeof path !== 'string')",
     "        throw new TypeError('Request method and path must be strings');",
@@ -130,7 +132,44 @@ async function findFunctionConfigs(directory) {
     return configs;
 }
 
-async function patchConfig(configPath) {
+function resolveFunctionFile(config, filename, projectRoot, functionDirectory) {
+    const mappedPath = config.filePathMap?.[filename];
+    const resolvedPath = typeof mappedPath === 'string'
+        ? path.resolve(projectRoot, mappedPath)
+        : path.resolve(functionDirectory, filename);
+    const relativePath = path.relative(projectRoot, resolvedPath);
+
+    if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+        throw new Error(`Function file ${filename} resolves outside the project root`);
+    }
+
+    return resolvedPath;
+}
+
+function removeExcludedLocalFiles(config) {
+    if (config.filePathMap === undefined) {
+        return;
+    }
+
+    if (typeof config.filePathMap !== 'object' || config.filePathMap === null || Array.isArray(config.filePathMap)) {
+        throw new Error('Unexpected filePathMap format in Vercel function configuration');
+    }
+
+    for (const [filename, mappedPath] of Object.entries(config.filePathMap)) {
+        if ([filename, mappedPath].some((value) => {
+            if (typeof value !== 'string') {
+                return false;
+            }
+
+            const segments = value.replace(/\\/g, '/').split('/');
+            return segments.includes('.git') || segments.some((segment) => /^\.env(?:\..*)?$/i.test(segment));
+        })) {
+            delete config.filePathMap[filename];
+        }
+    }
+}
+
+async function patchConfig(configPath, projectRoot) {
     const config = JSON.parse(await readFile(configPath, 'utf8'));
     const functionDirectory = path.dirname(configPath);
 
@@ -142,7 +181,10 @@ async function patchConfig(configPath) {
         throw new Error(`Unexpected runtime in ${configPath}: ${config.runtime}`);
     }
 
-    await access(path.join(functionDirectory, 'launcher.js'));
+    const launcherPath = resolveFunctionFile(config, 'launcher.js', projectRoot, functionDirectory);
+    const helpersPath = resolveFunctionFile(config, 'helpers.js', projectRoot, functionDirectory);
+
+    await access(launcherPath);
 
     if (config.handler !== expectedHandler && config.handler !== 'launcher.js') {
         throw new Error(`Unexpected handler in ${configPath}: ${config.handler}`);
@@ -152,10 +194,12 @@ async function patchConfig(configPath) {
         throw new Error(`Unexpected AWS Lambda handler in ${configPath}: ${config.awsLambdaHandler}`);
     }
 
-    await patchTaskRootFallback(functionDirectory);
+    await patchTaskRootFallback(path.dirname(helpersPath));
+    removeExcludedLocalFiles(config);
 
     Object.assign(config, {
         handler: 'launcher.js',
+        runtime: 'nodejs22.x',
         launcherType: 'Nodejs',
         awsLambdaHandler: expectedHandler,
         shouldAddHelpers: false,
@@ -174,9 +218,10 @@ export async function patchVercelRuntime(outputDirectory = '.vercel/output') {
 
     const configs = await findFunctionConfigs(functionsDirectory);
     let patchedCount = 0;
+    const projectRoot = path.dirname(path.dirname(absoluteOutputDirectory));
 
     for (const configPath of configs) {
-        if (await patchConfig(configPath)) {
+        if (await patchConfig(configPath, projectRoot)) {
             patchedCount += 1;
             console.log(`Patched ${path.relative(absoluteOutputDirectory, configPath).split(path.sep).join('/')}`);
         }

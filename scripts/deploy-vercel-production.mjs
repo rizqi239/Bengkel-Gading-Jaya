@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { access, cp, lstat, readFile, unlink } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
@@ -10,6 +10,56 @@ const expectedProject = {
     orgId: 'team_GfJYKPTrNp7DJjpjGArfencc',
 };
 const vercelScope = 'rizqi239s-kedai-pinky';
+
+async function normalizePublicStorage() {
+    const publicStorage = path.join(projectRoot, 'public', 'storage');
+    let publicStorageStats;
+
+    try {
+        publicStorageStats = await lstat(publicStorage);
+    } catch (error) {
+        if (error.code === 'ENOENT') {
+            return;
+        }
+
+        throw error;
+    }
+
+    if (! publicStorageStats.isSymbolicLink()) {
+        return;
+    }
+
+    const storageTarget = path.join(projectRoot, 'storage', 'app', 'public');
+    await access(storageTarget);
+    await unlink(publicStorage);
+    await cp(storageTarget, publicStorage, { recursive: true });
+    console.log('Copied public storage into the project before building.');
+}
+
+async function normalizeStaticStorage() {
+    const outputStorage = path.join(projectRoot, '.vercel', 'output', 'static', 'storage');
+    let outputStorageStats;
+
+    try {
+        outputStorageStats = await lstat(outputStorage);
+    } catch (error) {
+        if (error.code === 'ENOENT') {
+            return;
+        }
+
+        throw error;
+    }
+
+    if (! outputStorageStats.isSymbolicLink()) {
+        return;
+    }
+
+    const publicStorage = path.join(projectRoot, 'storage', 'app', 'public');
+    await access(publicStorage);
+    await unlink(outputStorage);
+    await cp(publicStorage, outputStorage, { recursive: true });
+    console.log('Copied public storage into Vercel static output.');
+}
 
 function run(command, args) {
     console.log(`\n> ${command} ${args.join(' ')}`);
@@ -55,7 +105,9 @@ async function main() {
 
     run('vercel', ['project', 'inspect', '--non-interactive', '--scope', vercelScope]);
     run('vercel', ['pull', '--yes', '--environment', 'production', '--scope', vercelScope]);
+    await normalizePublicStorage();
     run('vercel', ['build', '--yes', '--prod', '--scope', vercelScope]);
+    await normalizeStaticStorage();
     run('node', ['scripts/patch-vercel-runtime.mjs']);
     run('vercel', ['deploy', '--prebuilt', '--prod', '--yes', '--scope', vercelScope]);
 }
