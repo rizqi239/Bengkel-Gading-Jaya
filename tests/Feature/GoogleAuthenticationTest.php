@@ -8,10 +8,11 @@ use Laravel\Socialite\Facades\Socialite;
 
 uses(RefreshDatabase::class);
 
-function mockGoogleLogin(string $email): void
+function mockGoogleLogin(string $email, string $name = 'Google User'): void
 {
     $googleUser = Mockery::mock(GoogleUser::class);
     $googleUser->shouldReceive('getEmail')->andReturn($email);
+    $googleUser->shouldReceive('getName')->andReturn($name);
 
     $provider = Mockery::mock();
     $provider->shouldReceive('redirectUrl')->andReturnSelf();
@@ -23,33 +24,72 @@ function mockGoogleLogin(string $email): void
         ->andReturn($provider);
 }
 
-it('rejects Google accounts that are not registered', function () {
-    mockGoogleLogin('new-user@gmail.com');
+it('continues new Google users to role selection', function () {
+    mockGoogleLogin(' New-User@Gmail.com ', 'New Google User');
 
     $response = $this->get(route('google.callback'));
 
-    $response->assertRedirect(route('login'));
-    $response->assertSessionHasErrors([
-        'email' => 'Akun Google ini belum terdaftar. Silakan daftar terlebih dahulu.',
+    $response->assertRedirect(route('register'));
+    $response->assertSessionHas('google_registration', [
+        'email' => 'new-user@gmail.com',
+        'name' => 'New Google User',
     ]);
-    $response->assertSessionHas('google_account_unregistered', true);
     expect(User::count())->toBe(0);
     expect(Auth::check())->toBeFalse();
 });
 
-it('shows a registration popup with a link to register after an unregistered Google login', function () {
-    mockGoogleLogin('new-user@gmail.com');
+it('shows verified Google identity and role selection on the registration form', function () {
+    mockGoogleLogin('new-user@gmail.com', 'New Google User');
 
     $this->get(route('google.callback'))
-        ->assertRedirect(route('login'));
+        ->assertRedirect(route('register'));
 
-    $this->get(route('login'))
+    $this->get(route('register'))
         ->assertOk()
-        ->assertSee('Akun belum terdaftar')
-        ->assertSee(route('register'));
+        ->assertSee('Akun Google terverifikasi')
+        ->assertSee('New Google User')
+        ->assertSee('new-user@gmail.com')
+        ->assertSee('Pilih role')
+        ->assertDontSee('name="password" required', false);
 });
 
-it('does not keep a previous login when an unregistered Google account is used', function () {
+it('creates and signs in a Google account after the user selects a role', function () {
+    mockGoogleLogin('new-user@gmail.com', 'New Google User');
+
+    $this->get(route('google.callback'))
+        ->assertRedirect(route('register'));
+
+    $this->post(route('register'), [
+        'name' => 'Forged Name',
+        'email' => 'forged@example.com',
+        'role' => 'Kasir',
+        'password' => 'ignored-password',
+        'password_confirmation' => 'ignored-password',
+    ])->assertRedirect(route('dashboard'));
+
+    $user = User::first();
+    expect(User::count())->toBe(1)
+        ->and($user->name)->toBe('New Google User')
+        ->and($user->email)->toBe('new-user@gmail.com')
+        ->and($user->role)->toBe('Kasir')
+        ->and($user->email_verified_at)->not->toBeNull();
+    $this->assertAuthenticatedAs($user);
+});
+
+it('does not allow a Google registration to assign an unsupported role', function () {
+    mockGoogleLogin('new-user@gmail.com');
+    $this->get(route('google.callback'));
+
+    $this->from(route('register'))
+        ->post(route('register'), ['role' => 'Admin'])
+        ->assertRedirect(route('register'))
+        ->assertSessionHasErrors('role');
+
+    expect(User::count())->toBe(0);
+    $this->assertGuest();
+});
+
+it('does not keep a previous login when starting Google registration', function () {
     $previousUser = User::create([
         'name' => 'Pengguna Terdaftar',
         'email' => 'registered@gmail.com',
@@ -60,8 +100,8 @@ it('does not keep a previous login when an unregistered Google account is used',
 
     $response = $this->get(route('google.callback'));
 
-    $response->assertRedirect(route('login'));
-    $response->assertSessionHasErrors('email');
+    $response->assertRedirect(route('register'));
+    $response->assertSessionHas('google_registration.email', 'new-user@gmail.com');
     $this->assertGuest();
 });
 
@@ -83,7 +123,7 @@ it('allows registered Google accounts to sign in', function () {
         'password' => 'password',
     ]);
 
-    mockGoogleLogin('registered@gmail.com');
+    mockGoogleLogin('REGISTERED@gmail.com');
 
     $response = $this->get(route('google.callback'));
 

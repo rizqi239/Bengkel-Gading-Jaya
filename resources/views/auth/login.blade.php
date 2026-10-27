@@ -182,28 +182,6 @@
         </div>
     </div>
 
-    @if (session('google_account_unregistered'))
-        <div id="google-registration-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm" role="alertdialog" aria-modal="true" aria-labelledby="google-registration-title" aria-describedby="google-registration-description">
-            <div class="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900 p-7 text-center shadow-2xl sm:p-9">
-                <div class="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-orange-500/15 text-orange-400">
-                    <i data-lucide="user-round-plus" class="h-7 w-7"></i>
-                </div>
-                <h2 id="google-registration-title" class="text-2xl font-extrabold text-white">Akun belum terdaftar</h2>
-                <p id="google-registration-description" class="mt-3 text-sm leading-relaxed text-slate-300">
-                    Gmail ini belum memiliki akun Bengkel Gading Jaya. Silakan daftar terlebih dahulu untuk melanjutkan.
-                </p>
-                <div class="mt-7 flex flex-col-reverse gap-3 sm:flex-row">
-                    <a href="{{ route('login') }}" class="inline-flex flex-1 items-center justify-center rounded-full border border-slate-600 px-5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800">
-                        Kembali ke Login
-                    </a>
-                    <a href="{{ route('register') }}" class="inline-flex flex-1 items-center justify-center rounded-full bg-gradient-to-r from-orange-500 via-rose-500 to-amber-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:brightness-110">
-                        Daftar Akun
-                    </a>
-                </div>
-            </div>
-        </div>
-    @endif
-
     <!-- Toggle Password Visibility Script -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {

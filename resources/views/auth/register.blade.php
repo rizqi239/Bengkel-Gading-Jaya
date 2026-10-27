@@ -72,10 +72,26 @@
                 <!-- Sign Up Heading -->
                 <div class="text-left space-y-1">
                     <h2 class="text-3xl font-extrabold text-white tracking-tight">
-                        Sign <span class="border-b-2 border-orange-500 pb-0.5">up</span>
+                        @if ($googleRegistration)
+                            Lengkapi <span class="border-b-2 border-orange-500 pb-0.5">Pendaftaran</span>
+                        @else
+                            Sign <span class="border-b-2 border-orange-500 pb-0.5">up</span>
+                        @endif
                     </h2>
-                    <p class="text-xs text-slate-400 font-medium">Buat akun baru untuk mengakses sistem</p>
+                    <p class="text-xs text-slate-400 font-medium">
+                        @if ($googleRegistration)
+                            Akun Google terverifikasi. Pilih role untuk menyelesaikan pendaftaran.
+                        @else
+                            Buat akun baru untuk mengakses sistem
+                        @endif
+                    </p>
                 </div>
+
+                @if ($googleRegistration)
+                    <div class="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-xs text-emerald-200">
+                        Email Google <strong>{{ $googleRegistration['email'] }}</strong> akan digunakan untuk akun ini.
+                    </div>
+                @endif
 
                 <!-- Validation Errors Alert -->
                 @if ($errors->any())
@@ -100,7 +116,7 @@
                             <div class="absolute left-4 text-slate-400 pointer-events-none flex items-center justify-center">
                                 <i data-lucide="user" class="h-4 w-4"></i>
                             </div>
-                            <input type="text" id="name" name="name" value="{{ old('name') }}" required autofocus
+                            <input type="text" id="name" name="name" value="{{ old('name', $googleRegistration['name'] ?? '') }}" required autofocus {{ $googleRegistration ? 'readonly' : '' }}
                                 class="w-full rounded-full bg-slate-800/80 border border-slate-700/60 pl-11 pr-4 py-2.5 text-xs font-semibold text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:border-orange-500"
                                 placeholder="Masukkan nama lengkap">
                         </div>
@@ -113,7 +129,7 @@
                             <div class="absolute left-4 text-slate-400 pointer-events-none flex items-center justify-center">
                                 <i data-lucide="mail" class="h-4 w-4"></i>
                             </div>
-                            <input type="email" id="email" name="email" value="{{ old('email') }}" required
+                            <input type="email" id="email" name="email" value="{{ old('email', $googleRegistration['email'] ?? '') }}" required {{ $googleRegistration ? 'readonly' : '' }}
                                 class="w-full rounded-full bg-slate-800/80 border border-slate-700/60 pl-11 pr-4 py-2.5 text-xs font-semibold text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:border-orange-500"
                                 placeholder="nama@email.com">
                         </div>
@@ -136,54 +152,58 @@
                         </div>
                     </div>
 
-                    <!-- Password Field -->
-                    <div class="space-y-1.5">
-                        <label for="password" class="block text-xs font-semibold text-slate-300">Password</label>
-                        <div class="relative flex items-center">
-                            <div class="absolute left-4 text-slate-400 pointer-events-none flex items-center justify-center">
-                                <i data-lucide="lock" class="h-4 w-4"></i>
+                    @unless ($googleRegistration)
+                        <!-- Password Field -->
+                        <div class="space-y-1.5">
+                            <label for="password" class="block text-xs font-semibold text-slate-300">Password</label>
+                            <div class="relative flex items-center">
+                                <div class="absolute left-4 text-slate-400 pointer-events-none flex items-center justify-center">
+                                    <i data-lucide="lock" class="h-4 w-4"></i>
+                                </div>
+                                <input type="password" id="password" name="password" required
+                                    class="w-full rounded-full bg-slate-800/80 border border-slate-700/60 pl-11 pr-4 py-2.5 text-xs font-semibold text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:border-orange-500"
+                                    placeholder="Minimal 6 karakter">
                             </div>
-                            <input type="password" id="password" name="password" required
-                                class="w-full rounded-full bg-slate-800/80 border border-slate-700/60 pl-11 pr-4 py-2.5 text-xs font-semibold text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:border-orange-500"
-                                placeholder="Minimal 6 karakter">
                         </div>
-                    </div>
 
-                    <!-- Password Confirmation Field -->
-                    <div class="space-y-1.5">
-                        <label for="password_confirmation" class="block text-xs font-semibold text-slate-300">Konfirmasi Password</label>
-                        <div class="relative flex items-center">
-                            <div class="absolute left-4 text-slate-400 pointer-events-none flex items-center justify-center">
-                                <i data-lucide="check-circle" class="h-4 w-4"></i>
+                        <!-- Password Confirmation Field -->
+                        <div class="space-y-1.5">
+                            <label for="password_confirmation" class="block text-xs font-semibold text-slate-300">Konfirmasi Password</label>
+                            <div class="relative flex items-center">
+                                <div class="absolute left-4 text-slate-400 pointer-events-none flex items-center justify-center">
+                                    <i data-lucide="check-circle" class="h-4 w-4"></i>
+                                </div>
+                                <input type="password" id="password_confirmation" name="password_confirmation" required
+                                    class="w-full rounded-full bg-slate-800/80 border border-slate-700/60 pl-11 pr-4 py-2.5 text-xs font-semibold text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:border-orange-500"
+                                    placeholder="Ulangi password">
                             </div>
-                            <input type="password" id="password_confirmation" name="password_confirmation" required
-                                class="w-full rounded-full bg-slate-800/80 border border-slate-700/60 pl-11 pr-4 py-2.5 text-xs font-semibold text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:border-orange-500"
-                                placeholder="Ulangi password">
                         </div>
-                    </div>
+                    @endunless
 
                     <!-- Submit Button -->
                     <button type="submit" class="w-full rounded-full py-3 px-6 text-sm font-bold text-white bg-gradient-to-r from-orange-500 via-rose-500 to-amber-500 hover:from-orange-600 hover:via-rose-600 hover:to-amber-600 shadow-lg shadow-orange-500/25 cursor-pointer mt-2">
-                        Daftar Akun
+                        {{ $googleRegistration ? 'Buat Akun & Masuk' : 'Daftar Akun' }}
                     </button>
 
-                    <!-- Divider / Pemisah -->
-                    <div class="relative flex items-center justify-center my-4">
-                        <div class="border-t border-slate-700/80 w-full"></div>
-                        <span class="bg-slate-900 px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400 shrink-0">atau</span>
-                        <div class="border-t border-slate-700/80 w-full"></div>
-                    </div>
+                    @unless ($googleRegistration)
+                        <!-- Divider / Pemisah -->
+                        <div class="relative flex items-center justify-center my-4">
+                            <div class="border-t border-slate-700/80 w-full"></div>
+                            <span class="bg-slate-900 px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400 shrink-0">atau</span>
+                            <div class="border-t border-slate-700/80 w-full"></div>
+                        </div>
 
-                    <!-- Tombol Google Sign-In -->
-                    <a href="{{ route('google.redirect') }}" class="w-full flex items-center justify-center gap-3 rounded-full py-2.5 px-5 text-xs font-bold text-slate-200 bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 transition-all shadow-md">
-                        <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24">
-                            <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.2 9 5 12 5z"/>
-                            <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/>
-                            <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 10.8 0 12s.7 2.3 1.9 4.7l3.7-2.9z"/>
-                            <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.2-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"/>
-                        </svg>
-                        <span>Daftar dengan Google</span>
-                    </a>
+                        <!-- Tombol Google Sign-In -->
+                        <a href="{{ route('google.redirect') }}" class="w-full flex items-center justify-center gap-3 rounded-full py-2.5 px-5 text-xs font-bold text-slate-200 bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 transition-all shadow-md">
+                            <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24">
+                                <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 0 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.2 9 5 12 5z"/>
+                                <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/>
+                                <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 10.8 0 12s.7 2.3 1.9 4.7l3.7-2.9z"/>
+                                <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.2-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"/>
+                            </svg>
+                            <span>Daftar dengan Google</span>
+                        </a>
+                    @endunless
 
                     <!-- Link Back to Login -->
                     <div class="text-center pt-2">
