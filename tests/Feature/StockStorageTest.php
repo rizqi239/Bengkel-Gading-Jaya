@@ -25,7 +25,7 @@ beforeEach(function () {
         $table->string('category')->nullable();
         $table->integer('quantity')->default(0);
         $table->decimal('price', 12, 2)->default(0);
-        $table->string('photo')->nullable();
+        $table->text('photo')->nullable();
         $table->timestamps();
     });
 });
@@ -119,4 +119,60 @@ test('it uploads stock photo to configured storage disk', function () {
     expect($stock->photo)->not->toBeNull();
     expect($stock->photo)->toStartWith('data:image/');
     expect($stock->photo_url)->toBe($stock->photo);
+});
+
+test('it updates stock quantity and photo together', function () {
+    $user = User::create([
+        'name' => 'Owner Test',
+        'email' => 'owner@test.com',
+        'password' => bcrypt('password'),
+        'role' => 'Pemilik Toko',
+    ]);
+
+    $stock = Stock::create([
+        'code' => 'SP-001',
+        'name' => 'Kampas Rem',
+        'category' => 'Kampas Rem',
+        'quantity' => 5,
+        'price' => 75000,
+    ]);
+
+    $response = $this->actingAs($user)->put(route('stock.update', $stock), [
+        'code' => $stock->code,
+        'name' => $stock->name,
+        'category' => $stock->category,
+        'quantity' => 12,
+        'price' => $stock->price,
+        'photo' => UploadedFile::fake()->image('kampas_rem_baru.jpg'),
+    ]);
+
+    $response->assertRedirect(route('stock.index'));
+
+    $stock->refresh();
+    expect($stock->quantity)->toBe(12);
+    expect($stock->photo)->toStartWith('data:image/');
+    expect($stock->photo_url)->toBe($stock->photo);
+});
+
+test('it increases stock quantity', function () {
+    $user = User::create([
+        'name' => 'Owner Test',
+        'email' => 'owner@test.com',
+        'password' => bcrypt('password'),
+        'role' => 'Pemilik Toko',
+    ]);
+
+    $stock = Stock::create([
+        'code' => 'SP-001',
+        'name' => 'Oli Mesin',
+        'category' => 'Oli',
+        'quantity' => 5,
+        'price' => 85000,
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('stock.increase', $stock), ['quantity' => 3])
+        ->assertRedirect(route('stock.index'));
+
+    expect($stock->fresh()->quantity)->toBe(8);
 });
