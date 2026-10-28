@@ -56,12 +56,12 @@ Upload dan tampilan foto stok menggunakan disk `public`, yang tetap lokal secara
 Jika function PHP di Vercel gagal dijalankan, workflow GitHub Actions dapat membangun dan men-deploy output dengan patch runtime PHP yang diperlukan. Runner Ubuntu berjalan di GitHub, bukan di laptop; Docker dan WSL lokal tidak diperlukan.
 
 1. Buat Vercel access token, lalu simpan sebagai repository secret `VERCEL_TOKEN` di **Settings → Secrets and variables → Actions** pada GitHub. Workflow juga menerima nama `GADING_JAYA` jika itu nama secret yang sudah disiapkan.
-2. Buka tab **Actions**, pilih **Deploy Vercel production**, lalu klik **Run workflow**.
-3. Pilih `deploy` pada konfirmasi produksi dan jalankan workflow dari branch yang ingin di-deploy.
+2. Buka tab **Actions**, pilih **Deploy Vercel production**, lalu klik **Run workflow** dari branch `main`.
+3. Pilih `deploy` pada konfirmasi produksi. Workflow akan menolak branch selain `main`; opsi `cancel` tidak menjalankan deployment.
 
-Workflow memverifikasi project Vercel yang terhubung, memakai Node.js 22 sesuai runtime PHP yang didukung, mengambil environment produksi, membangun output, memperbaiki metadata runtime PHP, lalu men-deploy hasil prebuilt ke produksi. Proses berhenti jika langkah mana pun gagal atau project yang terhubung bukan project aplikasi ini. Workflow hanya berjalan saat dipicu manual dan meminta konfirmasi sebelum deploy.
+Workflow hanya dapat dipicu manual, meminta konfirmasi `deploy`, dan menggunakan GitHub Actions environment `production` sebelum melanjutkan. Atur required reviewers pada environment tersebut di GitHub Settings untuk menambahkan persetujuan kedua sebelum deploy. Workflow lalu memverifikasi project Vercel yang terhubung, memakai Node.js 22 sesuai runtime PHP yang didukung, mengambil environment produksi, membangun output, memperbaiki metadata runtime PHP, lalu men-deploy hasil prebuilt ke produksi. Proses berhenti jika langkah mana pun gagal atau project yang terhubung bukan project aplikasi ini.
 
-Untuk menjalankan deploy dari komputer lokal, diperlukan Linux; build runtime PHP tidak andal di Windows.
+Script deployment lokal juga menolak berjalan tanpa `CONFIRM_PRODUCTION_DEPLOY=deploy`; build tetap harus dilakukan di Linux karena build runtime PHP tidak andal di Windows. Gunakan workflow GitHub Actions agar konfirmasi, branch, environment, dan runner Linux diperiksa secara konsisten.
 
 Patcher menerapkan metadata `NodejsLambda` dari workaround upstream: file handler `launcher.js` dan AWS handler `launcher.launcher`, tanpa helper/source-map injection. Patcher juga menyesuaikan fallback `LAMBDA_TASK_ROOT` ke `/var/task`, normalisasi body/header request, dan menghapus referensi `.git` serta `.env*` dari metadata fungsi agar deployment prebuilt tidak mengunggah berkas version-control atau konfigurasi rahasia. Script deploy mengganti symlink `public/storage` dengan salinan target di lingkungan build sementara, lalu menyalin target `storage/app/public` ke output statis jika build menghasilkan symlink `storage` yang tidak dapat diunggah Vercel. Patcher hanya menyentuh fungsi PHP yang cocok di `.vercel/output`; jika output tidak memiliki bentuk yang diharapkan, proses berhenti dengan error. Build harus dilakukan di Linux karena builder PHP gagal menghasilkan executable runtime yang valid di Windows.
 

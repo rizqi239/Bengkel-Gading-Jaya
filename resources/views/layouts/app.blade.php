@@ -53,18 +53,23 @@
         <div class="flex h-20 items-center justify-between px-6 border-b border-blue-800/40">
             <div class="flex items-center gap-3">
                 <!-- Clickable Interactive Logo Box -->
-                <label for="sidebar-logo-input" title="Klik untuk mengunggah / mengganti Logo Bengkel" class="relative cursor-pointer flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-rubick-blue shadow-md font-extrabold text-xl overflow-hidden hover:ring-2 hover:ring-white/80 transition-all">
+                <form action="{{ route('settings.logo.update') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <label for="sidebar-logo-input" title="Klik untuk mengunggah / mengganti Logo Bengkel" class="relative cursor-pointer flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-rubick-blue shadow-md font-extrabold text-xl overflow-hidden hover:ring-2 hover:ring-white/80 transition-all">
                     <!-- Custom Uploaded Logo Image Preview -->
-                    <img id="sidebar-logo-preview" src="" alt="Logo Bengkel" class="hidden h-full w-full object-cover rounded-xl">
+                    @if($logoUrl)
+                    <img id="sidebar-logo-preview" src="{{ $logoUrl }}" alt="Logo Bengkel Gading Jaya" class="h-full w-full object-contain rounded-xl">
+                    @endif
                     
                     <!-- Default Logo Icon -->
-                    <div id="sidebar-logo-default" class="flex items-center justify-center">
+                    <div id="sidebar-logo-default" class="{{ $logoUrl ? 'hidden' : 'flex' }} items-center justify-center">
                         <i data-lucide="wrench" class="h-5 w-5 text-rubick-blue" style="color: #1b42b6;"></i>
                     </div>
 
                     <!-- Hidden File Input -->
-                    <input type="file" id="sidebar-logo-input" accept="image/*" class="hidden" onchange="handleLogoUpload(event)">
-                </label>
+                    <input type="file" id="sidebar-logo-input" name="logo" accept="image/*" class="hidden" onchange="this.form.submit()">
+                    </label>
+                </form>
 
                 <div>
                     <h1 class="text-lg font-bold text-white tracking-wider" style="color: #ffffff;">Gading Jaya</h1>
@@ -120,7 +125,7 @@
             <div class="flex items-center justify-between gap-2">
                 <a href="{{ route('profile') }}" class="flex-1 min-w-0 flex items-center gap-3 text-left p-1.5 rounded-xl hover:bg-white/10 transition-all group cursor-pointer focus:outline-none" title="Klik untuk membuka Halaman Profil">
                     <div class="relative shrink-0">
-                        <img id="sidebar-user-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&auto=format&fit=crop" alt="User Avatar" class="h-10 w-10 rounded-xl object-cover ring-2 ring-white/40 group-hover:ring-white transition-all">
+                        <img id="sidebar-user-avatar" src="{{ $avatarUrl }}" alt="User Avatar" class="h-10 w-10 rounded-xl object-cover ring-2 ring-white/40 group-hover:ring-white transition-all">
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-semibold text-white truncate group-hover:text-blue-100 transition-colors" style="color: #ffffff;">{{ Auth::user()->name ?? 'Administrator' }}</p>
@@ -174,7 +179,7 @@
                 <div class="relative border-l border-slate-200 pl-2.5 sm:pl-3">
                     <button type="button" id="profile-menu-button" onclick="toggleProfileDropdown(event)" class="group flex items-center gap-2.5 p-1 rounded-full hover:bg-slate-100 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-rubick-blue/30 cursor-pointer" aria-expanded="false" aria-haspopup="true" title="Klik untuk membuka menu profil">
                         <div class="relative">
-                            <img id="topbar-user-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&auto=format&fit=crop" alt="User Avatar" class="h-9 w-9 rounded-full object-cover ring-2 ring-slate-200 group-hover:ring-blue-600 transition-all">
+                            <img id="topbar-user-avatar" src="{{ $avatarUrl }}" alt="User Avatar" class="h-9 w-9 rounded-full object-cover ring-2 ring-slate-200 group-hover:ring-blue-600 transition-all">
                         </div>
                         <div class="hidden md:flex flex-col text-left">
                             <span class="text-xs font-bold text-slate-800 leading-tight group-hover:text-rubick-blue transition-colors">{{ Auth::user()->name ?? 'Administrator' }}</span>
@@ -189,7 +194,7 @@
                         <div class="px-4 py-3 border-b border-slate-100 bg-linear-to-r from-blue-50/60 to-indigo-50/30">
                             <div class="flex items-center gap-3">
                                 <div class="relative shrink-0">
-                                    <img id="dropdown-user-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&auto=format&fit=crop" alt="User Avatar" class="h-10 w-10 rounded-full object-cover ring-2 ring-blue-600/30">
+                                    <img id="dropdown-user-avatar" src="{{ $avatarUrl }}" alt="User Avatar" class="h-10 w-10 rounded-full object-cover ring-2 ring-blue-600/30">
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <p class="text-xs font-bold text-slate-900 truncate">{{ Auth::user()->name ?? 'Administrator' }}</p>
@@ -267,7 +272,16 @@
     </div>
 
     <!-- Hidden File Input for Avatar Upload -->
-    <input type="file" id="user-avatar-input" accept="image/*" class="hidden" onchange="handleUserAvatarUpload(event)" oninput="handleUserAvatarUpload(event)">
+    <form id="avatar-upload-form" action="{{ route('profile.avatar.update') }}" method="POST" enctype="multipart/form-data" class="hidden">
+        @csrf
+        <input type="file" id="user-avatar-input" name="avatar" accept="image/*" onchange="this.form.submit()">
+    </form>
+
+    @error('logo')
+    <div role="alert" class="fixed bottom-5 right-5 z-50 rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 text-xs font-semibold text-rose-700 shadow-lg">
+        {{ $message }}
+    </div>
+    @enderror
 
     <!-- Profile Details Modal -->
     <div id="profile-modal" class="fixed inset-0 z-50 items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300" onclick="handleModalBackdropClick(event)">
@@ -287,7 +301,7 @@
             <div class="px-6 pb-6 pt-0 -mt-12">
                 <div class="flex items-end justify-between mb-4">
                     <div class="relative group cursor-pointer" onclick="triggerAvatarUpload()" title="Klik untuk mengunggah / mengganti foto profil">
-                        <img id="modal-user-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&auto=format&fit=crop" alt="User Avatar" class="h-20 w-20 rounded-2xl object-cover ring-4 ring-white shadow-lg group-hover:opacity-90 transition-all">
+                        <img id="modal-user-avatar" src="{{ $avatarUrl }}" alt="User Avatar" class="h-20 w-20 rounded-2xl object-cover ring-4 ring-white shadow-lg group-hover:opacity-90 transition-all">
                         <div class="absolute inset-0 bg-slate-900/40 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                             <i data-lucide="camera" class="h-6 w-6 text-white"></i>
                         </div>
@@ -399,46 +413,9 @@
         function triggerAvatarUpload() {
             const fileInput = document.getElementById('user-avatar-input');
             if (fileInput) {
-                fileInput.value = ''; // Reset file input so re-selecting any file fires event
+                fileInput.value = '';
                 fileInput.click();
             }
-        }
-
-        function handleUserAvatarUpload(event) {
-            const files = event.target.files || (event.dataTransfer && event.dataTransfer.files);
-            if (!files || !files.length) return;
-
-            const file = files[0];
-            if (file && file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const avatarDataUrl = e.target.result;
-                    try {
-                        localStorage.setItem('bengkel_custom_user_avatar', avatarDataUrl);
-                    } catch (err) {
-                        console.warn('LocalStorage limit reached for user avatar:', err);
-                    }
-                    applyUserAvatarImage(avatarDataUrl);
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function applyUserAvatarImage(dataUrl) {
-            if (!dataUrl) return;
-
-            // Instantly update every avatar image element across the entire page
-            const allAvatarImgs = document.querySelectorAll('img[id*="avatar"], img[alt*="Avatar"]');
-            allAvatarImgs.forEach(img => {
-                img.src = dataUrl;
-            });
-
-            // Fallback for specific IDs
-            const avatarIds = ['topbar-user-avatar', 'sidebar-user-avatar', 'dropdown-user-avatar', 'modal-user-avatar', 'profile-page-avatar'];
-            avatarIds.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.src = dataUrl;
-            });
         }
 
         function openProfileModal() {
@@ -479,42 +456,7 @@
             }
         }
 
-        function handleLogoUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const logoDataUrl = e.target.result;
-                    try {
-                        localStorage.setItem('bengkel_custom_logo', logoDataUrl);
-                    } catch (err) {
-                        console.warn('LocalStorage limit reached for logo data URL:', err);
-                    }
-                    applyLogoImage(logoDataUrl);
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function applyLogoImage(dataUrl) {
-            const imgPreview = document.getElementById('sidebar-logo-preview');
-            const defaultIcon = document.getElementById('sidebar-logo-default');
-            if (dataUrl && imgPreview && defaultIcon) {
-                imgPreview.src = dataUrl;
-                imgPreview.classList.remove('hidden');
-                defaultIcon.classList.add('hidden');
-            }
-        }
-
         document.addEventListener('DOMContentLoaded', () => {
-            const savedLogo = localStorage.getItem('bengkel_custom_logo');
-            if (savedLogo) {
-                applyLogoImage(savedLogo);
-            }
-            const savedAvatar = localStorage.getItem('bengkel_custom_user_avatar');
-            if (savedAvatar) {
-                applyUserAvatarImage(savedAvatar);
-            }
             if (localStorage.getItem('bengkel_notif_read') === 'true') {
                 const badgeDot = document.getElementById('notification-badge-dot');
                 if (badgeDot) badgeDot.classList.add('hidden');

@@ -11,6 +11,7 @@ use App\Http\Controllers\PembelianController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AbsensiController;
+use App\Http\Controllers\BrandingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -42,6 +43,8 @@ Route::middleware('auth')->group(function () {
     // Halaman Profil & Notifikasi Pengguna
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
     Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar.update');
+    Route::post('/settings/logo', [BrandingController::class, 'updateLogo'])->name('settings.logo.update');
     Route::get('/notifikasi', function () {
         return view('notifikasi');
     })->name('notifikasi');
@@ -55,6 +58,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('absensi', AbsensiController::class)->except(['show']);
 
     // Stock resource routes (index, create, store, edit, update, destroy)
+    Route::get('/stock/{stock}/photo', [StockController::class, 'photo'])->name('stock.photo');
     Route::resource('stock', StockController::class)->except(['show']);
     Route::post('/stock/{stock}/increase', [StockController::class, 'increase'])->name('stock.increase');
 

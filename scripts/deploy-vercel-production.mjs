@@ -80,6 +80,10 @@ function run(command, args) {
 }
 
 async function main() {
+    if (process.env.CONFIRM_PRODUCTION_DEPLOY !== 'deploy') {
+        throw new Error('Production deployment requires CONFIRM_PRODUCTION_DEPLOY=deploy.');
+    }
+
     if (process.platform !== 'linux') {
         throw new Error('The Vercel PHP build requires Linux. Use the GitHub Actions workflow; no local WSL or Docker is needed.');
     }

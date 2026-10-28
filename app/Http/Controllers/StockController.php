@@ -22,6 +22,25 @@ class StockController extends Controller
         return view('stock.index', compact('stocks'));
     }
 
+    public function photo(Stock $stock)
+    {
+        if (! preg_match('/\Adata:(image\/(?:jpeg|png|gif|webp|bmp));base64,([A-Za-z0-9+\/=\r\n]+)\z/i', $stock->photo ?? '', $matches)) {
+            abort(404);
+        }
+
+        $image = base64_decode($matches[2], true);
+
+        if ($image === false) {
+            abort(404);
+        }
+
+        return response($image, 200, [
+            'Content-Type' => strtolower($matches[1]),
+            'Cache-Control' => 'private, max-age=3600',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
     public function create()
     {
         $code = $this->nextStockCode();

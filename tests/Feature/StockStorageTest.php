@@ -28,9 +28,16 @@ beforeEach(function () {
         $table->text('photo')->nullable();
         $table->timestamps();
     });
+
+    Schema::create('site_settings', function (Blueprint $table) {
+        $table->string('name')->primary();
+        $table->text('value')->nullable();
+        $table->timestamps();
+    });
 });
 
 afterEach(function () {
+    Schema::dropIfExists('site_settings');
     Schema::dropIfExists('stocks');
     Schema::dropIfExists('users');
 });
@@ -118,7 +125,7 @@ test('it uploads stock photo to configured storage disk', function () {
     expect($stock->name)->toBe('Kampas Rem Depan');
     expect($stock->photo)->not->toBeNull();
     expect($stock->photo)->toStartWith('data:image/');
-    expect($stock->photo_url)->toBe($stock->photo);
+    expect($stock->photo_url)->toBe(route('stock.photo', $stock));
 });
 
 test('it updates stock quantity and photo together', function () {
@@ -151,7 +158,7 @@ test('it updates stock quantity and photo together', function () {
     $stock->refresh();
     expect($stock->quantity)->toBe(12);
     expect($stock->photo)->toStartWith('data:image/');
-    expect($stock->photo_url)->toBe($stock->photo);
+    expect($stock->photo_url)->toBe(route('stock.photo', $stock));
 });
 
 test('it increases stock quantity', function () {

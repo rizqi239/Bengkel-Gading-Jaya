@@ -35,7 +35,11 @@ class Stock extends Model
             return null;
         }
 
-        if (str_starts_with($this->photo, 'http://') || str_starts_with($this->photo, 'https://') || str_starts_with($this->photo, 'data:')) {
+        if (str_starts_with($this->photo, 'data:image/')) {
+            return route('stock.photo', $this);
+        }
+
+        if (str_starts_with($this->photo, 'http://') || str_starts_with($this->photo, 'https://')) {
             return $this->photo;
         }
 

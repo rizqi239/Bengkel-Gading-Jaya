@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
@@ -59,5 +60,36 @@ class ProfileController extends Controller
         $user->save();
 
         return redirect()->route('profile')->with('status', 'Profil dan Nomor WhatsApp berhasil diperbarui!');
+    }
+
+    public function updateAvatar(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        $validated = $request->validate([
+            'avatar' => ['required', 'image', 'max:2048'],
+        ], [
+            'avatar.required' => 'Pilih foto profil terlebih dahulu.',
+            'avatar.image' => 'File foto profil harus berupa gambar.',
+            'avatar.max' => 'Ukuran foto profil maksimal 2 MB.',
+        ]);
+
+        $avatarPath = $validated['avatar']->store('avatars', 'public');
+        if (!$avatarPath) {
+            throw new \RuntimeException('Foto profil gagal disimpan.');
+        }
+
+        $oldAvatarPath = $user->avatar_path;
+        $user->avatar_path = $avatarPath;
+        $user->save();
+
+        if ($oldAvatarPath) {
+            Storage::disk('public')->delete($oldAvatarPath);
+        }
+
+        return redirect()->route('profile')->with('status', 'Foto profil berhasil diperbarui.');
     }
 }

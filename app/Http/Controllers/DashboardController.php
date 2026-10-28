@@ -126,7 +126,7 @@ class DashboardController extends Controller
 
         foreach ($sortedStocks as $stk) {
             $soldCount = $soldQuantities[$stk->id] ?? ($soldQuantities[strtolower(trim($stk->name))] ?? 0);
-            $photoUrl = $stk->photo ? asset('storage/' . $stk->photo) : $defaultImages[$idx % count($defaultImages)];
+            $photoUrl = $stk->photo_url ?: $defaultImages[$idx % count($defaultImages)];
 
             $topProducts[] = [
                 'id' => $stk->id,
@@ -137,6 +137,8 @@ class DashboardController extends Controller
                 'sold' => $soldCount,
                 'price' => $stk->price,
                 'status' => $stk->quantity > 0 ? 'Active' : 'Inactive',
+                'has_photo' => !empty($stk->photo),
+                'photo_url' => $photoUrl,
                 'images' => [$photoUrl],
                 'edit_url' => route('stock.edit', $stk->id),
                 'delete_url' => route('stock.destroy', $stk->id),

@@ -39,11 +39,14 @@
                 <!-- Avatar & Quick Details (Spacious Clean Layout with Generous Space) -->
                 <div class="px-6 pb-8 text-center" style="padding-top: 2.5rem;">
                     <div class="relative inline-block group cursor-pointer" style="margin-top: 2rem; margin-bottom: 1rem;" onclick="triggerAvatarUpload()" title="Klik untuk mengunggah / mengganti foto profil">
-                        <img id="profile-page-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&auto=format&fit=crop" alt="User Avatar" class="h-28 w-28 rounded-2xl object-cover ring-4 ring-slate-100 shadow-md mx-auto group-hover:opacity-90 transition-all">
+                        <img id="profile-page-avatar" src="{{ $avatarUrl }}" alt="User Avatar" class="h-28 w-28 rounded-2xl object-cover ring-4 ring-slate-100 shadow-md mx-auto group-hover:opacity-90 transition-all">
                         <div class="absolute inset-0 bg-slate-900/40 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                             <i data-lucide="camera" class="h-6 w-6 text-white"></i>
                         </div>
                     </div>
+                    @error('avatar')
+                    <p role="alert" class="mb-3 text-xs font-semibold text-rose-600">{{ $message }}</p>
+                    @enderror
 
                     <h2 class="text-xl font-extrabold text-slate-900 mt-3">{{ $user->name ?? 'Administrator' }}</h2>
                     <p class="text-xs text-slate-500 font-medium mt-0.5">{{ $user->email ?? 'admin@bengkelgmj.com' }}</p>
@@ -244,13 +247,4 @@
 @endsection
 
 @section('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const savedAvatar = localStorage.getItem('bengkel_custom_user_avatar');
-        if (savedAvatar) {
-            const pageAvatar = document.getElementById('profile-page-avatar');
-            if (pageAvatar) pageAvatar.src = savedAvatar;
-        }
-    });
-</script>
 @endsection

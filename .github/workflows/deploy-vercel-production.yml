@@ -26,9 +26,30 @@ jobs:
   deploy:
     if: ${{ (github.event_name == 'workflow_dispatch' && inputs.confirm_production == 'deploy') || (github.event_name == 'push' && contains(github.event.head_commit.message, '[deploy-production]')) }}
     runs-on: ubuntu-latest
+    environment: production
     timeout-minutes: 20
 
     steps:
+      - name: Validate production branch and confirmation
+        env:
+          WORKFLOW_REF: ${{ github.ref }}
+          EVENT_NAME: ${{ github.event_name }}
+          CONFIRM_PRODUCTION: ${{ inputs.confirm_production }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          if [ "$WORKFLOW_REF" != "refs/heads/main" ]; then
+            echo "Production deployments must be run from the main branch."
+            exit 1
+          fi
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$CONFIRM_PRODUCTION" != "deploy" ]; then
+            echo "Production deployment was not explicitly confirmed."
+            exit 1
+          fi
+          if [ "$EVENT_NAME" = "push" ] && ! echo "$COMMIT_MSG" | grep -q "\[deploy-production\]"; then
+            echo "Push does not contain [deploy-production]."
+            exit 1
+          fi
+
       - name: Check out repository
         uses: actions/checkout@v4
 
@@ -82,4 +103,5 @@ jobs:
       - name: Build, patch PHP runtime, and deploy
         env:
           VERCEL_TOKEN: ${{ steps.vercel-auth.outputs.token_secret == 'VERCEL_TOKEN' && secrets.VERCEL_TOKEN || steps.vercel-auth.outputs.token_secret == 'BENGKEL_GADING_JAYA' && secrets.BENGKEL_GADING_JAYA || secrets.GADING_JAYA }}
+          CONFIRM_PRODUCTION_DEPLOY: ${{ github.event_name == 'workflow_dispatch' && inputs.confirm_production || 'deploy' }}
         run: npm run deploy:production
