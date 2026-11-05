@@ -61,10 +61,14 @@ jobs:
 
       - name: Verify Vercel token is configured
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN || secrets.BENGKEL_GADING_JAYA || secrets.GADING_JAYA }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_VAR: ${{ vars.VERCEL_TOKEN }}
+          BENGKEL_GADING_JAYA_TOKEN: ${{ secrets.BENGKEL_GADING_JAYA }}
+          GADING_JAYA_TOKEN: ${{ secrets.GADING_JAYA }}
         run: |
-          if [ -z "$VERCEL_TOKEN" ]; then
-            echo "Add VERCEL_TOKEN as a GitHub Actions repository secret before deploying."
+          TOKEN="${VERCEL_TOKEN:-${VERCEL_VAR:-${BENGKEL_GADING_JAYA_TOKEN:-$GADING_JAYA_TOKEN}}}"
+          if [ -z "$TOKEN" ]; then
+            echo "No token found in secrets.VERCEL_TOKEN, vars.VERCEL_TOKEN, secrets.BENGKEL_GADING_JAYA, or secrets.GADING_JAYA."
             exit 1
           fi
 
@@ -78,30 +82,38 @@ jobs:
         id: vercel-auth
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_VAR: ${{ vars.VERCEL_TOKEN }}
           BENGKEL_GADING_JAYA_TOKEN: ${{ secrets.BENGKEL_GADING_JAYA }}
           GADING_JAYA_TOKEN: ${{ secrets.GADING_JAYA }}
         run: |
-          if [ -n "$VERCEL_TOKEN" ] && vercel whoami --format json >/dev/null 2>&1; then
-            echo "token_secret=VERCEL_TOKEN" >> "$GITHUB_OUTPUT"
-            echo "Vercel authentication succeeded using VERCEL_TOKEN."
-          elif [ -n "$BENGKEL_GADING_JAYA_TOKEN" ] && VERCEL_TOKEN="$BENGKEL_GADING_JAYA_TOKEN" vercel whoami --format json >/dev/null 2>&1; then
-            echo "token_secret=BENGKEL_GADING_JAYA" >> "$GITHUB_OUTPUT"
-            echo "Vercel authentication succeeded using BENGKEL_GADING_JAYA."
-          elif [ -n "$GADING_JAYA_TOKEN" ] && VERCEL_TOKEN="$GADING_JAYA_TOKEN" vercel whoami --format json >/dev/null 2>&1; then
-            echo "token_secret=GADING_JAYA" >> "$GITHUB_OUTPUT"
-            echo "Vercel authentication succeeded using GADING_JAYA."
-          else
-            echo "Vercel authentication failed. Update VERCEL_TOKEN or GADING_JAYA with a valid token for the account that owns this project."
-            exit 1
-          fi
+          for name in VERCEL_TOKEN VERCEL_VAR BENGKEL_GADING_JAYA GADING_JAYA; do
+            case "$name" in
+              VERCEL_TOKEN) val="$VERCEL_TOKEN" ;;
+              VERCEL_VAR) val="$VERCEL_VAR" ;;
+              BENGKEL_GADING_JAYA) val="$BENGKEL_GADING_JAYA_TOKEN" ;;
+              GADING_JAYA) val="$GADING_JAYA_TOKEN" ;;
+            esac
+            val=$(echo "$val" | tr -d '\r\n[:space:]')
+            if [ -n "$val" ]; then
+              echo "Testing authentication with $name..."
+              if VERCEL_TOKEN="$val" vercel whoami; then
+                echo "token_secret=$name" >> "$GITHUB_OUTPUT"
+                echo "token_val=$val" >> "$GITHUB_OUTPUT"
+                echo "Vercel authentication succeeded using $name."
+                exit 0
+              fi
+            fi
+          done
+          echo "Vercel authentication failed. Update VERCEL_TOKEN with a valid token for the account that owns this project."
+          exit 1
 
       - name: Link the production Vercel project
         env:
-          VERCEL_TOKEN: ${{ steps.vercel-auth.outputs.token_secret == 'VERCEL_TOKEN' && secrets.VERCEL_TOKEN || steps.vercel-auth.outputs.token_secret == 'BENGKEL_GADING_JAYA' && secrets.BENGKEL_GADING_JAYA || secrets.GADING_JAYA }}
+          VERCEL_TOKEN: ${{ steps.vercel-auth.outputs.token_val }}
         run: vercel link --yes --team team_GfJYKPTrNp7DJjpjGArfencc --project prj_uGtI05jocA3IsqbDjvKeuslpD4Hj
 
       - name: Build, patch PHP runtime, and deploy
         env:
-          VERCEL_TOKEN: ${{ steps.vercel-auth.outputs.token_secret == 'VERCEL_TOKEN' && secrets.VERCEL_TOKEN || steps.vercel-auth.outputs.token_secret == 'BENGKEL_GADING_JAYA' && secrets.BENGKEL_GADING_JAYA || secrets.GADING_JAYA }}
+          VERCEL_TOKEN: ${{ steps.vercel-auth.outputs.token_val }}
           CONFIRM_PRODUCTION_DEPLOY: ${{ github.event_name == 'workflow_dispatch' && inputs.confirm_production || 'deploy' }}
         run: npm run deploy:production
