@@ -125,7 +125,7 @@ test('it uploads stock photo to configured storage disk', function () {
     expect($stock->name)->toBe('Kampas Rem Depan');
     expect($stock->photo)->not->toBeNull();
     expect($stock->photo)->toStartWith('data:image/');
-    expect($stock->photo_url)->toBe(route('stock.photo', $stock));
+    expect($stock->photo_url)->toBe(route('stock.photo', $stock, false));
 });
 
 test('it updates stock quantity and photo together', function () {
@@ -158,7 +158,7 @@ test('it updates stock quantity and photo together', function () {
     $stock->refresh();
     expect($stock->quantity)->toBe(12);
     expect($stock->photo)->toStartWith('data:image/');
-    expect($stock->photo_url)->toBe(route('stock.photo', $stock));
+    expect($stock->photo_url)->toBe(route('stock.photo', $stock, false));
 });
 
 test('it increases stock quantity', function () {

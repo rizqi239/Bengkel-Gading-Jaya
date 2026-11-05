@@ -38,6 +38,9 @@ Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm']
 Route::post('/forgot-password', [AuthController::class, 'resetPassword'])->name('password.update');
 Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');
 
+// Public Product Photo Route (accessible without login)
+Route::get('/stock/{stock}/photo', [StockController::class, 'photo'])->name('stock.photo');
+
 // Halaman Utama & Fitur Aplikasi (Wajib Login / Auth Protected)
 Route::middleware('auth')->group(function () {
     // Halaman Profil & Notifikasi Pengguna
@@ -58,7 +61,6 @@ Route::middleware('auth')->group(function () {
     Route::resource('absensi', AbsensiController::class)->except(['show']);
 
     // Stock resource routes (index, create, store, edit, update, destroy)
-    Route::get('/stock/{stock}/photo', [StockController::class, 'photo'])->name('stock.photo');
     Route::resource('stock', StockController::class)->except(['show']);
     Route::post('/stock/{stock}/increase', [StockController::class, 'increase'])->name('stock.increase');
 

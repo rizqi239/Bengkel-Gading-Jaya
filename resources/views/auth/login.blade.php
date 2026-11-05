@@ -142,7 +142,7 @@
                     </div>
 
                     <!-- Submit Button -->
-                    <button type="submit" class="w-full rounded-full py-3.5 px-6 text-sm font-bold text-white bg-gradient-to-r from-orange-500 via-rose-500 to-amber-500 hover:from-orange-600 hover:via-rose-600 hover:to-amber-600 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-orange-500/40 transition-all duration-200 ease-out cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-400/70 focus:ring-offset-2 focus:ring-offset-slate-900">
+                    <button type="submit" class="w-full rounded-full py-3.5 px-6 text-sm font-bold text-white bg-linear-to-r from-orange-500 via-rose-500 to-amber-500 hover:from-orange-600 hover:via-rose-600 hover:to-amber-600 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-orange-500/40 transition-all duration-200 ease-out cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-400/70 focus:ring-offset-2 focus:ring-offset-slate-900">
                         Submit
                     </button>
 

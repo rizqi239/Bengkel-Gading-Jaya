@@ -114,19 +114,10 @@ class DashboardController extends Controller
             return $b->quantity <=> $a->quantity;
         });
 
-        $defaultImages = [
-            'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?q=80&w=120&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?q=80&w=120&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?q=80&w=120&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1563720223185-11003d516935?q=80&w=120&auto=format&fit=crop',
-        ];
-
         $topProducts = [];
-        $idx = 0;
 
         foreach ($sortedStocks as $stk) {
             $soldCount = $soldQuantities[$stk->id] ?? ($soldQuantities[strtolower(trim($stk->name))] ?? 0);
-            $photoUrl = $stk->photo_url ?: $defaultImages[$idx % count($defaultImages)];
 
             $topProducts[] = [
                 'id' => $stk->id,
@@ -137,14 +128,12 @@ class DashboardController extends Controller
                 'sold' => $soldCount,
                 'price' => $stk->price,
                 'status' => $stk->quantity > 0 ? 'Active' : 'Inactive',
+                'photo_url' => $stk->photo_url,
                 'has_photo' => !empty($stk->photo),
-                'photo_url' => $photoUrl,
-                'images' => [$photoUrl],
                 'edit_url' => route('stock.edit', $stk->id),
                 'delete_url' => route('stock.destroy', $stk->id),
                 'is_db' => true,
             ];
-            $idx++;
         }
 
         $recentRepairs = KasirTransaction::latest()->take(5)->get();

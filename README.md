@@ -65,7 +65,7 @@ Script deployment lokal juga menolak berjalan tanpa `CONFIRM_PRODUCTION_DEPLOY=d
 
 Patcher menerapkan metadata `NodejsLambda` dari workaround upstream: file handler `launcher.js` dan AWS handler `launcher.launcher`, tanpa helper/source-map injection. Patcher juga menyesuaikan fallback `LAMBDA_TASK_ROOT` ke `/var/task`, normalisasi body/header request, dan menghapus referensi `.git` serta `.env*` dari metadata fungsi agar deployment prebuilt tidak mengunggah berkas version-control atau konfigurasi rahasia. Script deploy mengganti symlink `public/storage` dengan salinan target di lingkungan build sementara, lalu menyalin target `storage/app/public` ke output statis jika build menghasilkan symlink `storage` yang tidak dapat diunggah Vercel. Patcher hanya menyentuh fungsi PHP yang cocok di `.vercel/output`; jika output tidak memiliki bentuk yang diharapkan, proses berhenti dengan error. Build harus dilakukan di Linux karena builder PHP gagal menghasilkan executable runtime yang valid di Windows.
 
-Jangan abaikan `vendor` atau direktori framework `storage` di `.vercelignore`: build PHP prebuilt merujuk berkas-berkas tersebut melalui `filePathMap` dan deployment akan gagal jika berkas yang dirujuk tidak diunggah.
+`.vercelignore` dan `functions.api/index.php.excludeFiles` mengecualikan proyek Android, tooling lokal, dan tes dari deployment serta paket function PHP. Pola `excludeFiles` juga mempertahankan pengecualian bawaan builder (`node_modules/**`, `now.json`, `.nowignore`, `vercel.json`, dan `.vercelignore`). Jangan abaikan `vendor` atau direktori framework `storage`: build PHP prebuilt merujuk berkas-berkas tersebut melalui `filePathMap` dan deployment akan gagal jika berkas yang dirujuk tidak diunggah.
 
 ## Agentic Development
 

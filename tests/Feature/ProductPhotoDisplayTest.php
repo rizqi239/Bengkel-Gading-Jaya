@@ -85,11 +85,11 @@ test('dashboard renders the authenticated product photo endpoint', function () {
     $this->actingAs($user)
         ->get(route('dashboard'))
         ->assertOk()
-        ->assertSee(route('stock.photo', Stock::firstOrFail()), false)
+        ->assertSee(route('stock.photo', Stock::firstOrFail(), false), false)
         ->assertDontSee($photo, false);
 });
 
-test('dashboard renders top best seller photo showcase and modal', function () {
+test('dashboard renders top best sellers with product photos', function () {
     $this->withoutVite();
 
     $user = User::create([
@@ -98,23 +98,50 @@ test('dashboard renders top best seller photo showcase and modal', function () {
         'password' => bcrypt('password'),
     ]);
 
-    $photo = 'data:image/jpeg;base64,ZmFrZS1pbWFnZQ==';
     $stock = Stock::create([
         'code' => 'SP-010',
         'name' => 'Oli Mesin Matic GMJ',
         'category' => 'Oli',
         'quantity' => 15,
         'price' => 95000,
-        'photo' => $photo,
+        'photo' => 'data:image/jpeg;base64,ZmFrZS1pbWFnZQ==',
     ]);
 
     $this->actingAs($user)
         ->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('FOTO PRODUK')
+        ->assertSee('Oli Mesin Matic GMJ')
         ->assertSee('#1 Terlaris Minggu Ini')
-        ->assertSee('dashboardPhotoModal')
-        ->assertSee(route('stock.photo', $stock), false);
+        ->assertSee(route('stock.photo', $stock, false), false)
+        ->assertDontSee('FOTO PRODUK')
+        ->assertDontSee('dashboardPhotoModal')
+        ->assertDontSee('photo-1552519507');
+});
+
+test('dashboard does not show a photo placeholder for best sellers without photos', function () {
+    $this->withoutVite();
+
+    $user = User::create([
+        'name' => 'Admin Test 3',
+        'email' => 'admin-no-product-photo@test.com',
+        'password' => bcrypt('password'),
+    ]);
+
+    Stock::create([
+        'code' => 'SP-011',
+        'name' => 'Kampas Rem',
+        'category' => 'Rem',
+        'quantity' => 5,
+        'price' => 45000,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('Kampas Rem')
+        ->assertDontSee('No Foto')
+        ->assertDontSee('FOTO PRODUK')
+        ->assertDontSee('photo-1552519507');
 });
 
 test('product photo endpoint serves the saved image bytes', function () {
@@ -142,7 +169,7 @@ test('product photo endpoint serves the saved image bytes', function () {
         ->assertContent($bytes);
 });
 
-test('product photo endpoint requires authentication', function () {
+test('product photo endpoint serves images without authentication', function () {
     $stock = Stock::create([
         'code' => 'SP-003',
         'name' => 'Busi',
@@ -153,5 +180,7 @@ test('product photo endpoint requires authentication', function () {
     ]);
 
     $this->get(route('stock.photo', $stock))
-        ->assertRedirect(route('login'));
+        ->assertOk()
+        ->assertHeader('Content-Type', 'image/jpeg')
+        ->assertContent('valid-image-bytes');
 });

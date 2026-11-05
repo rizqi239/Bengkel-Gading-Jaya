@@ -39,7 +39,7 @@
         <div class="w-full lg:w-1/2 flex flex-col justify-between space-y-8 text-left">
             <!-- Brand Icon/Logo Header -->
             <div class="flex items-center gap-3">
-                <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-400 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                <div class="h-10 w-10 rounded-xl bg-linear-to-tr from-orange-500 to-amber-400 flex items-center justify-center shadow-lg shadow-orange-500/20">
                     <i data-lucide="wrench" class="h-5 w-5 text-white"></i>
                 </div>
                 <span class="text-sm font-bold tracking-wider text-slate-200 uppercase">Bengkel Gading Jaya</span>
@@ -50,7 +50,7 @@
                 <h1 class="text-4xl sm:text-6xl font-black tracking-tight text-white leading-tight">
                     Reset Password
                 </h1>
-                <div class="w-16 h-1 bg-gradient-to-r from-orange-500 to-rose-500 rounded-full"></div>
+                <div class="w-16 h-1 bg-linear-to-r from-orange-500 to-rose-500 rounded-full"></div>
                 <p class="text-sm sm:text-base text-slate-300/90 max-w-md font-normal leading-relaxed pt-2">
                     Lupa password akun Anda? Masukkan alamat email terdaftar dan buat password baru secara mandiri.
                 </p>
@@ -58,7 +58,7 @@
 
             <!-- Call to Action Button -->
             <div class="pt-2">
-                <a href="{{ route('login') }}" class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 via-rose-500 to-amber-500 px-7 py-3 text-xs font-bold text-white shadow-xl shadow-orange-500/25">
+                <a href="{{ route('login') }}" class="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-orange-500 via-rose-500 to-amber-500 px-7 py-3 text-xs font-bold text-white shadow-xl shadow-orange-500/25">
                     <span>Sudah Ingat? Login</span>
                     <i data-lucide="arrow-right" class="h-4 w-4"></i>
                 </a>
@@ -133,7 +133,7 @@
                     </div>
 
                     <!-- Submit Button -->
-                    <button type="submit" class="w-full rounded-full py-3 px-6 text-sm font-bold text-white bg-gradient-to-r from-orange-500 via-rose-500 to-amber-500 hover:from-orange-600 hover:via-rose-600 hover:to-amber-600 shadow-lg shadow-orange-500/25 cursor-pointer mt-2">
+                    <button type="submit" class="w-full rounded-full py-3 px-6 text-sm font-bold text-white bg-linear-to-r from-orange-500 via-rose-500 to-amber-500 hover:from-orange-600 hover:via-rose-600 hover:to-amber-600 shadow-lg shadow-orange-500/25 cursor-pointer mt-2">
                         Simpan Password Baru
                     </button>
 
